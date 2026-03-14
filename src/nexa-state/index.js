@@ -1,0 +1,1 @@
+export { createNSManager } from "./core/index.js";
