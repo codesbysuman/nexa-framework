@@ -6,6 +6,7 @@ export function createNexaRouter() {
     let wildcardRoute = null;
     let routeIndexCounter = 0; // To track registration order for tie-breaking
     let base = "";
+    let onNavigateHandler;
 
     // ================== HELPERS ==================
     const normalizePath = (path) => {
@@ -228,7 +229,7 @@ export function createNexaRouter() {
 
     // ================== NAVIGATION ==================
     const navigate = async (path, replace = false) => {
-        await onNavigate?.();
+        await onNavigateHandler?.();
         const url = new URL(path, location.origin);
         let pathname = normalizePath(url.pathname);
         
@@ -331,7 +332,7 @@ export function createNexaRouter() {
     }
 
     const onNavigate = async (handler) => {
-        await handler?.();
+       onNavigateHandler = handler;
     }
 
     // ================== PUBLIC API ==================
