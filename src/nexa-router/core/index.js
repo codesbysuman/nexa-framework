@@ -7,6 +7,7 @@ export function createNexaRouter() {
     let routeIndexCounter = 0; // To track registration order for tie-breaking
     let base = "";
     let onNavigateHandler;
+    let abort;
 
     // ================== HELPERS ==================
     const normalizePath = (path) => {
@@ -229,10 +230,16 @@ export function createNexaRouter() {
 
     // ================== NAVIGATION ==================
     const navigate = async (path, replace = false) => {
-        await onNavigateHandler?.();
+        
         const url = new URL(path, location.origin);
         let pathname = normalizePath(url.pathname);
-        
+        await onNavigateHandler?.({pathname, replace, abortNavigation(){
+            abort = true
+        }});
+        if(abort) {
+            abort = false;
+            return
+        };
         if(base && pathname.startsWith(base)){
             pathname = normalizePath(pathname.slice(base.length))
         }
@@ -268,6 +275,9 @@ export function createNexaRouter() {
         } catch (error) {
             if(!isProduction) console.error('[Nexa] Page Fn error:', error); 
         }
+
+        
+        
 
     };
 
