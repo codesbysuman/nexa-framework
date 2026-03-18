@@ -24,8 +24,5 @@ export const htmlAndJsNodes = [
 
     // JavaScript Node Types
     "element", "text", "cdata", "processinginstruction", "comment",
-    "document", "doctype", "fragment",
-
-    // special markers
-    "placeholder"
+    "document", "doctype", "fragment"
 ];

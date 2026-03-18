@@ -28,6 +28,11 @@ export function applyProps(el, oldProps = {}, newProps = {}) {
         if (key === "className") {
             el.className = newVal || "";
         }
+        else if (key === "dataset" && typeof newVal === "object") {
+            for(const key in newVal){
+                 el.dataset[key] = newVal[key] || "";
+            }
+        }
         else if (key === "style" && typeof newVal === "object") {
             Object.assign(el.style, newVal);
         }

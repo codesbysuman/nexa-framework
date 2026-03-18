@@ -1,6 +1,6 @@
 import { htmlAndJsNodes } from "../core-utils/tags-list.js";
 
-export function createNexaDomTags() {
+export function createNexaTags() {
     const nexaDomTags = {};
 
 
@@ -77,14 +77,7 @@ export function createNexaDomTags() {
                 console.error('Error in cdata handler:', error);
                 return { tag: 'cdata', prop: null, children: [''] };
             }
-        },
-
-        placeholder(id) {
-            return {
-                isPlaceholder: true,
-                key: id
-            }
-        },
+        }
     };
 
     function isProps(val) {
