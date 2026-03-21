@@ -246,8 +246,8 @@ export function createNexaRouter() {
         const match = matchRoute(pathname);
         if (!match) return;
 
-        if (replace) history.replaceState({}, "", path);
-        else history.pushState({}, "", path);
+        if (replace) history.replaceState({}, "", url);
+        else if(location.pathname !== pathname) history.pushState({}, "", path);
 
         if (currentCleanup) {
             await currentCleanup();

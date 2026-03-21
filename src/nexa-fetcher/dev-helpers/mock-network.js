@@ -1,14 +1,25 @@
-export function mockNetwork({onSuccessData = {}, thresholds = {}}) {
-    const { successRate , timeout } = thresholds;
-    return new Promise((resolve, reject) => {
-        if (Math.random() < (1 - successRate)) {
-            reject({ status: "500" })
-            return;
-        }
-
-        setTimeout(() => {
-            resolve(onSuccessData);
-            return;
-        }, timeout);
-    })
+export async function mockNetwork(
+    fn,
+    {
+        delay = 0,
+        resolve,
+        reject
+    } = {}
+) {
+    
+    if (delay > 0) {
+        await new Promise(r =>
+            setTimeout(r, delay)
+        )
+    }
+    
+    if (reject) {
+        throw reject()
+    }
+    
+    if (resolve) {
+        return resolve()
+    }
+    
+    return fn()
 }

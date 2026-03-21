@@ -1,100 +1,207 @@
 export function createNexaFetcher() {
-    const registry = new Map();
-    let production = false;
 
-    let globalConfig = {
-        baseURL: "",
-        headers: {},
-        credentials: undefined
-    };
+  const endpoints = new Map()
 
-    function setRoute(name, config) {
-        registry.set(name, config);
+  let production = true
+
+  let config = {
+    baseURL: "",
+    headers: {}
+  }
+
+
+  function setProduction(v) {
+    production = !!v
+  }
+
+
+  function setConfig(v) {
+    config = { ...config, ...v }
+  }
+
+
+  function setEndpoint(name, ep) {
+    endpoints.set(name, ep)
+  }
+
+
+  function buildURL(url, params, query) {
+
+    if (params) {
+      for (let k in params) {
+        url = url.replace(
+          ":" + k,
+          params[k]
+        )
+      }
     }
 
-    function setProduction(value) {
-        production = !!value;
+    if (query) {
+
+      const qs =
+        new URLSearchParams(query)
+          .toString()
+
+      if (qs) {
+        url += "?" + qs
+      }
     }
 
-    function setConfig(config) {
-        globalConfig = { ...globalConfig, ...config };
+    return url
+  }
+
+
+  async function call(name, opt = {}) {
+
+    const ep = endpoints.get(name)
+
+    if (!ep) {
+      return {
+        ok: false,
+        status: 0,
+        data: null,
+        error: new Error(
+          "Endpoint not found: " + name
+        ),
+        response: null
+      }
     }
 
-    async function _fetchRaw(url, options = {}) {
-        const merged = {
-            headers: {
-                "Content-Type": "application/json",
-                ...globalConfig.headers,
-                ...options.headers
-            },
-            credentials: options.credentials ?? globalConfig.credentials,
-            ...options
-        };
 
-        if (merged.headers["Content-Type"] === undefined) {
-            delete merged.headers["Content-Type"];
+    let cfg = {
+      ...config,
+      ...ep,
+      ...opt
+    }
+
+
+    // dev fallback
+
+    if (!production && ep.dev) {
+      cfg = {
+        ...cfg,
+        ...ep.dev
+      }
+    }
+
+
+    let url = buildURL(
+      cfg.url,
+      cfg.params,
+      cfg.query
+    )
+
+    url =
+      (cfg.baseURL || "") +
+      url
+
+
+    // json shortcut
+
+    if (cfg.json) {
+
+      cfg.body =
+        JSON.stringify(cfg.json)
+
+      cfg.headers = {
+        "Content-Type":
+          "application/json",
+        ...cfg.headers
+      }
+    }
+
+    if (!ep?.dev?.data) {
+      try {
+
+        const res = await fetch(url, {
+
+          method:
+            cfg.method || "GET",
+
+          headers: {
+            ...config.headers,
+            ...cfg.headers
+          },
+
+          body: cfg.body,
+
+          signal: cfg.signal,
+
+          credentials:
+            cfg.credentials
+        })
+
+
+        // raw mode
+
+        if (cfg.parse === false) {
+
+          return {
+            ok: res.ok,
+            status: res.status,
+            data: null,
+            error: res.ok
+              ? null
+              : new Error(
+                "HTTP " + res.status
+              ),
+            response: res
+          }
         }
 
-        const res = await fetch((options.baseURL ?? globalConfig.baseURL) + url, merged);
+
+        let data = null
+
+        try {
+          data = await res.json()
+        } catch { }
+
 
         if (!res.ok) {
-            let error;
-            try {
-                error = await res.json();
-            } catch {
-                error = { status: res.status, message: res.statusText };
-            }
-            throw error;
+
+          return {
+            ok: false,
+            status: res.status,
+            data,
+            error: new Error(
+              "HTTP " + res.status
+            ),
+            response: res
+          }
         }
 
-        return res.json();
-    }
 
-    async function _call(name, opts = {}) {
-        const api = registry.get(name);
-        if (!api) throw new Error(`API "${name}" not defined`);
-
-        // ---- MOCK MODE ----
-        if (!production && api.mock) {
-            return await api.mock(...(opts.params || []));
+        return {
+          ok: true,
+          status: res.status,
+          data,
+          error: null,
+          response: res
         }
 
-        // dynamic URL
-        const url =
-            typeof api.url === "function"
-                ? api.url(...(opts.params || []))
-                : api.url;
+      } catch (e) {
 
-        // final merged options
-        const finalOpts = {
-            method: opts.method ?? api.method ?? "GET",
-            body: opts.body ? JSON.stringify(opts.body) : undefined,
-            headers: {
-                ...api.headers,
-                ...opts.headers
-            },
-            credentials: opts.credentials ?? api.credentials ?? globalConfig.credentials,
-            ...api.options,
-            ...opts.options,
-            baseURL: opts.baseURL ?? api.baseURL ?? globalConfig.baseURL
-        };
-
-        return _fetchRaw(url, finalOpts);
-    }
-
-    async function call(name, opts = {}) {
-        try {
-            const data = await _call(name, opts); // derive existing call
-            return data;
-        } catch (error) {
-            return { error };
+        return {
+          ok: false,
+          status: 0,
+          data: null,
+          error: e,
+          response: null
         }
+
+      }
+    }else{
+      return ep.dev.data
     }
 
-    return {
-        setRoute,
-        setProduction,
-        setConfig,
-        call
-    };
+  }
+
+
+  return {
+    setProduction,
+    setConfig,
+    setEndpoint,
+    call
+  }
+
 }
