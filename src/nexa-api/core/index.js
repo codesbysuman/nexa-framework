@@ -40,17 +40,8 @@ export function createNexaAPI(options = {}) {
       } else {
         fetchOptions.body = requestOptions.body;
       }
-    }
-
+    } 
     const response = await fetch(url, fetchOptions);
-
-    if (!response.ok) {
-      const error = new Error(response.statusText);
-      error.status = response.status;
-      error.data = response;
-      throw error;
-    }
-
     return response;
   }
 
