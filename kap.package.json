@@ -1,0 +1,16 @@
+{
+  "name": "nexa-js",
+  "version": "0.1.0",
+  "rules": [
+    {
+      "match": [
+        "**/**",
+        "!**/.git/**",
+        "!kap.package.json",
+        "!kap.changes.json"
+      ],
+      "to": "js/nexa-js",
+      "onConflict": "overwrite"
+    }
+  ]
+}
